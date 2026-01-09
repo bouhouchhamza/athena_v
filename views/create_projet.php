@@ -4,24 +4,18 @@ require_once __DIR__ . '/../utils/Auth.php';
 require_once __DIR__ . '/../utils/Helpers.php';
 require_once __DIR__ . '/../services/ProjetService.php';
 require_once __DIR__ . '/../entities/Projet.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
-// Only admin and chef can create/edit projects
 $user = $auth->getCurrentUser();
 if (!$user->canManageEverything()) {
     header('HTTP/1.0 403 Forbidden');
     echo 'Access denied';
     exit();
 }
-
 $projetService = new ProjetService();
 $projet = null;
 $isEdit = false;
 $errors = [];
-
-// Check if editing existing project
 $projetId = Helpers::getGet('id');
 if ($projetId) {
     $projet = $projetService->getProjetById($projetId);
@@ -31,33 +25,24 @@ if ($projetId) {
     }
     $isEdit = true;
 }
-
-// Handle form submission
 if (Helpers::isPost()) {
     $nom = Helpers::sanitize(Helpers::getPost('nom'));
     $description = Helpers::sanitize(Helpers::getPost('description'));
     $dateDebut = Helpers::getPost('date_debut');
     $dateFin = Helpers::getPost('date_fin');
     $statut = Helpers::getPost('statut');
-    
-    // Validation
     $errors = Helpers::validateRequired($_POST, ['nom', 'statut']);
-    
     if (empty($errors)) {
         try {
             $dateDebutObj = $dateDebut ? new DateTime($dateDebut) : null;
             $dateFinObj = $dateFin ? new DateTime($dateFin) : null;
-            
             if ($isEdit) {
-                // Update existing project
                 $projetService->updateProjet($user->getId(), $projetId, $nom, $description, $dateDebutObj, $dateFinObj, $statut);
                 Helpers::flash('success', 'Project updated successfully!');
             } else {
-                // Create new project
                 $projetService->createProjet($user->getId(), $nom, $description, $dateDebutObj, $dateFinObj);
                 Helpers::flash('success', 'Project created successfully!');
             }
-            
             Helpers::redirect('projets.php');
         } catch (Exception $e) {
             $errors['general'] = 'Error: ' . $e->getMessage();
@@ -65,7 +50,6 @@ if (Helpers::isPost()) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,11 +89,9 @@ if (Helpers::isPost()) {
                 <a href="admin_dashboard.php">Dashboard</a>
             </div>
         </div>
-        
         <?php if (isset($errors['general'])): ?>
             <div class="error-general"><?php echo $errors['general']; ?></div>
         <?php endif; ?>
-        
         <form method="POST">
             <div class="form-group">
                 <label for="nom">Project Name:</label>
@@ -119,24 +101,20 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['nom']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div class="form-group">
                 <label for="description">Description:</label>
                 <textarea id="description" name="description"><?php echo $projet ? htmlspecialchars($projet->getDescription()) : Helpers::getPost('description'); ?></textarea>
             </div>
-            
             <div class="form-group">
                 <label for="date_debut">Start Date:</label>
                 <input type="date" id="date_debut" name="date_debut" 
                        value="<?php echo $projet && $projet->getDateDebut() ? $projet->getDateDebut()->format('Y-m-d') : Helpers::getPost('date_debut'); ?>">
             </div>
-            
             <div class="form-group">
                 <label for="date_fin">End Date:</label>
                 <input type="date" id="date_fin" name="date_fin" 
                        value="<?php echo $projet && $projet->getDateFin() ? $projet->getDateFin()->format('Y-m-d') : Helpers::getPost('date_fin'); ?>">
             </div>
-            
             <div class="form-group">
                 <label for="statut">Status:</label>
                 <select id="statut" name="statut" required>
@@ -149,7 +127,6 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['statut']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div>
                 <button type="submit"><?php echo $isEdit ? 'Update Project' : 'Create Project'; ?></button>
                 <a href="projets.php" class="btn-secondary" style="display: inline-block; padding: 12px 24px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Cancel</a>

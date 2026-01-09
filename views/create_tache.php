@@ -7,45 +7,35 @@ require_once __DIR__ . '/../repositories/SprintRepository.php';
 require_once __DIR__ . '/../repositories/UserRepository.php';
 require_once __DIR__ . '/../services/TacheService.php';
 require_once __DIR__ . '/../entities/Tache.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
 $sprintId = Helpers::getGet('sprint_id');
 $action = Helpers::getGet('action');
 $taskId = Helpers::getGet('id');
-
 if (!$sprintId) {
     Helpers::flash('error', 'Sprint ID is required');
     Helpers::redirect('projets.php');
 }
-
 $tacheService = new TacheService();
 $sprintRepository = new SprintRepository();
 $userRepository = new UserRepository();
-
 $sprint = null;
 $tache = null;
 $users = [];
 $errors = [];
-
 try {
     $sprint = $sprintRepository->findById($sprintId);
     if (!$sprint) {
         Helpers::flash('error', 'Sprint not found');
         Helpers::redirect('projets.php');
     }
-    
     $users = $userRepository->findAll();
-    
-    // Handle specific actions
     if ($action && $taskId) {
         $tache = $tacheService->getTaskById($taskId);
         if (!$tache) {
             Helpers::flash('error', 'Task not found');
             Helpers::redirect('taches.php?sprint_id=' . $sprintId);
         }
-        
         if ($action === 'complete') {
             try {
                 $tacheService->completeTask($auth->getCurrentUser()->getId(), $taskId);
@@ -72,25 +62,17 @@ try {
 } catch (Exception $e) {
     $errors['general'] = 'Error: ' . $e->getMessage();
 }
-
-// Handle task creation
 if (Helpers::isPost() && !$action) {
     $titre = Helpers::sanitize(Helpers::getPost('titre'));
     $description = Helpers::sanitize(Helpers::getPost('description'));
     $assigneA = Helpers::getPost('assigne_a');
-    
-    // Validation
     $errors = Helpers::validateRequired($_POST, ['titre']);
-    
     if (empty($errors)) {
         try {
             $tache = $tacheService->createTask($auth->getCurrentUser()->getId(), $sprintId, $titre, $description);
-            
-            // Assign task if assignee selected
             if ($assigneA) {
                 $tacheService->assignTask($auth->getCurrentUser()->getId(), $tache->getId(), $assigneA);
             }
-            
             Helpers::flash('success', 'Task created successfully!');
             Helpers::redirect('taches.php?sprint_id=' . $sprintId);
         } catch (Exception $e) {
@@ -98,10 +80,8 @@ if (Helpers::isPost() && !$action) {
         }
     }
 }
-
 $user = $auth->getCurrentUser();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -155,17 +135,14 @@ $user = $auth->getCurrentUser();
                 <a href="admin_dashboard.php">Dashboard</a>
             </div>
         </div>
-        
         <?php if (isset($errors['general'])): ?>
             <div class="error-general"><?php echo $errors['general']; ?></div>
         <?php endif; ?>
-        
         <?php if ($action === 'assign' && $tache): ?>
             <div class="task-info">
                 <strong>Task:</strong> <?php echo htmlspecialchars($tache->getTitre()); ?><br>
                 <strong>Current Status:</strong> <?php echo htmlspecialchars($tache->getStatut()); ?>
             </div>
-            
             <form method="POST">
                 <div class="form-group">
                     <label for="assignee_id">Assign To:</label>
@@ -178,20 +155,17 @@ $user = $auth->getCurrentUser();
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
                 <div>
                     <button type="submit">Assign Task</button>
                     <a href="taches.php?sprint_id=<?php echo $sprintId; ?>" class="btn-secondary" style="display: inline-block; padding: 12px 24px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Cancel</a>
                 </div>
             </form>
-        
         <?php elseif ($action === 'complete' && $tache): ?>
             <div class="task-info">
                 <strong>Task:</strong> <?php echo htmlspecialchars($tache->getTitre()); ?><br>
                 <strong>Description:</strong> <?php echo htmlspecialchars($tache->getDescription() ?? 'N/A'); ?><br>
                 <strong>Current Status:</strong> <?php echo htmlspecialchars($tache->getStatut()); ?>
             </div>
-            
             <form method="POST">
                 <p>Are you sure you want to mark this task as completed?</p>
                 <div>
@@ -199,7 +173,6 @@ $user = $auth->getCurrentUser();
                     <a href="taches.php?sprint_id=<?php echo $sprintId; ?>" class="btn-secondary" style="display: inline-block; padding: 12px 24px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Cancel</a>
                 </div>
             </form>
-        
         <?php else: ?>
             <form method="POST">
                 <div class="form-group">
@@ -209,12 +182,10 @@ $user = $auth->getCurrentUser();
                         <div class="error"><?php echo $errors['titre']; ?></div>
                     <?php endif; ?>
                 </div>
-                
                 <div class="form-group">
                     <label for="description">Description:</label>
                     <textarea id="description" name="description"><?php echo Helpers::getPost('description'); ?></textarea>
                 </div>
-                
                 <div class="form-group">
                     <label for="assigne_a">Assign To:</label>
                     <select id="assigne_a" name="assigne_a">
@@ -226,7 +197,6 @@ $user = $auth->getCurrentUser();
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
                 <div>
                     <button type="submit">Create Task</button>
                     <a href="taches.php?sprint_id=<?php echo $sprintId; ?>" class="btn-secondary" style="display: inline-block; padding: 12px 24px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Cancel</a>

@@ -5,30 +5,23 @@ require_once __DIR__ . '/../utils/Helpers.php';
 require_once __DIR__ . '/../services/SprintService.php';
 require_once __DIR__ . '/../services/ProjetService.php';
 require_once __DIR__ . '/../entities/Sprint.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
-// Only admin and chef can create sprints
 $user = $auth->getCurrentUser();
 if (!$user->canManageEverything()) {
     header('HTTP/1.0 403 Forbidden');
     echo 'Access denied';
     exit();
 }
-
 $projetId = Helpers::getGet('projet_id');
 if (!$projetId) {
     Helpers::flash('error', 'Project ID is required');
     Helpers::redirect('projets.php');
 }
-
 $sprintService = new SprintService();
 $projetService = new ProjetService();
-
 $projet = null;
 $errors = [];
-
 try {
     $projet = $projetService->getProjetById($projetId);
     if (!$projet) {
@@ -39,26 +32,18 @@ try {
     Helpers::flash('error', 'Failed to load project: ' . $e->getMessage());
     Helpers::redirect('projets.php');
 }
-
-// Handle form submission
 if (Helpers::isPost()) {
     $nom = Helpers::sanitize(Helpers::getPost('nom'));
     $description = Helpers::sanitize(Helpers::getPost('description'));
     $dateDebut = Helpers::getPost('date_debut');
     $dateFin = Helpers::getPost('date_fin');
     $statut = Helpers::getPost('statut');
-    
-    // Validation
     $errors = Helpers::validateRequired($_POST, ['nom', 'statut']);
-    
     if (empty($errors)) {
         try {
             $dateDebutObj = $dateDebut ? new DateTime($dateDebut) : null;
             $dateFinObj = $dateFin ? new DateTime($dateFin) : null;
-            
-            // Create new sprint
             $sprintService->createSprint($user->getId(), $projetId, $nom, $description, $dateDebutObj, $dateFinObj);
-            
             Helpers::flash('success', 'Sprint created successfully!');
             Helpers::redirect('sprints.php?projet_id=' . $projetId);
         } catch (Exception $e) {
@@ -67,7 +52,6 @@ if (Helpers::isPost()) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -109,11 +93,9 @@ if (Helpers::isPost()) {
                 <a href="admin_dashboard.php">Dashboard</a>
             </div>
         </div>
-        
         <?php if (isset($errors['general'])): ?>
             <div class="error-general"><?php echo $errors['general']; ?></div>
         <?php endif; ?>
-        
         <form method="POST">
             <div class="form-group">
                 <label for="nom">Sprint Name:</label>
@@ -122,22 +104,18 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['nom']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div class="form-group">
                 <label for="description">Description:</label>
                 <textarea id="description" name="description"><?php echo Helpers::getPost('description'); ?></textarea>
             </div>
-            
             <div class="form-group">
                 <label for="date_debut">Start Date:</label>
                 <input type="date" id="date_debut" name="date_debut" value="<?php echo Helpers::getPost('date_debut'); ?>">
             </div>
-            
             <div class="form-group">
                 <label for="date_fin">End Date:</label>
                 <input type="date" id="date_fin" name="date_fin" value="<?php echo Helpers::getPost('date_fin'); ?>">
             </div>
-            
             <div class="form-group">
                 <label for="statut">Status:</label>
                 <select id="statut" name="statut" required>
@@ -150,7 +128,6 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['statut']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div>
                 <button type="submit">Create Sprint</button>
                 <a href="sprints.php?projet_id=<?php echo $projetId; ?>" class="btn-secondary" style="display: inline-block; padding: 12px 24px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Cancel</a>

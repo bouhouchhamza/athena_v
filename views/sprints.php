@@ -4,38 +4,30 @@ require_once __DIR__ . '/../utils/Auth.php';
 require_once __DIR__ . '/../utils/Helpers.php';
 require_once __DIR__ . '/../services/SprintService.php';
 require_once __DIR__ . '/../services/ProjetService.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
 $projetId = Helpers::getGet('projet_id');
 if (!$projetId) {
     Helpers::flash('error', 'Project ID is required');
     Helpers::redirect('projets.php');
 }
-
 $sprintService = new SprintService();
 $projetService = new ProjetService();
-
 $sprints = [];
 $projet = null;
 $error = '';
-
 try {
     $projet = $projetService->getProjetById($projetId);
     if (!$projet) {
         Helpers::flash('error', 'Project not found');
         Helpers::redirect('projets.php');
     }
-    
     $sprints = $sprintService->getSprintsByProjet($projetId);
 } catch (Exception $e) {
     $error = 'Failed to load sprints: ' . $e->getMessage();
 }
-
 $user = $auth->getCurrentUser();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,21 +78,17 @@ $user = $auth->getCurrentUser();
                 <a href="logout.php">Logout</a>
             </div>
         </div>
-        
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        
         <?php $success = Helpers::getFlash('success'); ?>
         <?php if ($success): ?>
             <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
-        
         <div style="margin-bottom: 20px;">
             <a href="create_sprint.php?projet_id=<?php echo $projetId; ?>" class="btn btn-success">+ Create New Sprint</a>
             <a href="projets.php" class="btn btn-secondary">← Back to Projects</a>
         </div>
-        
         <?php if (empty($sprints)): ?>
             <div class="empty">
                 <p>No sprints found for this project.</p>

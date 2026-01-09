@@ -8,22 +8,16 @@ require_once __DIR__ . '/../repositories/SprintRepository.php';
 require_once __DIR__ . '/../repositories/TacheRepository.php';
 require_once __DIR__ . '/../repositories/ReclamationRepository.php';
 require_once __DIR__ . '/../services/LogService.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
 $user = $auth->getCurrentUser();
 $isAdmin = $user->canManageEverything();
-
-// Initialize repositories
 $userRepository = new UserRepository();
 $projetRepository = new ProjetRepository();
 $sprintRepository = new SprintRepository();
 $tacheRepository = new TacheRepository();
 $reclamationRepository = new ReclamationRepository();
 $logService = LogService::getInstance();
-
-// Get statistics
 $stats = [
     'total_users' => 0,
     'total_projects' => 0,
@@ -33,10 +27,8 @@ $stats = [
     'open_reclamations' => 0,
     'completed_tasks' => 0
 ];
-
 $recentLogs = [];
 $error = '';
-
 try {
     $stats['total_users'] = count($userRepository->findAll());
     $stats['total_projects'] = count($projetRepository->findAll());
@@ -44,16 +36,12 @@ try {
     $stats['total_tasks'] = count($tacheRepository->findAll());
     $stats['total_reclamations'] = count($reclamationRepository->findAll());
     $stats['open_reclamations'] = count($reclamationRepository->findOpen());
-    
-    // Count completed tasks
     $allTasks = $tacheRepository->findAll();
     foreach ($allTasks as $task) {
         if ($task->isTermine()) {
             $stats['completed_tasks']++;
         }
     }
-    
-    // Get recent logs (only for admins)
     if ($isAdmin) {
         $recentLogs = $logService->getRecentLogs(10);
     }
@@ -61,7 +49,6 @@ try {
     $error = 'Failed to load dashboard data: ' . $e->getMessage();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,21 +102,17 @@ try {
                 <a href="logout.php">Logout</a>
             </div>
         </div>
-        
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        
         <?php $success = Helpers::getFlash('success'); ?>
         <?php if ($success): ?>
             <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
-        
         <div class="welcome">
             <h2>Welcome back, <?php echo htmlspecialchars($user->getUsername()); ?>!</h2>
             <p>Here's an overview of your Scrum project management system.</p>
         </div>
-        
         <!-- Statistics Cards -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -163,7 +146,6 @@ try {
                 </div>
             <?php endif; ?>
         </div>
-        
         <div class="content-grid">
             <!-- Quick Actions -->
             <div class="card">
@@ -172,7 +154,7 @@ try {
                     <a href="projets.php" class="btn">View Projects</a>
                     <?php if ($isAdmin): ?>
                         <a href="create_projet.php" class="btn btn-success">Create Project</a>
-                        <a href="create_sprint.php?projet_id=1" class="btn btn-success">Add Sprint</a>
+                        <a href="projets.php" class="btn btn-success">Add Sprint</a>
                         <a href="register.php" class="btn btn-warning">Add User</a>
                     <?php endif; ?>
                     <a href="reclamations.php" class="btn btn-danger">
@@ -182,7 +164,6 @@ try {
                         <?php endif; ?>
                     </a>
                 </div>
-                
                 <?php if ($isAdmin): ?>
                     <h3 style="margin-top: 30px; margin-bottom: 15px;">System Overview</h3>
                     <ul style="list-style: none; padding: 0;">
@@ -196,7 +177,6 @@ try {
                     <p>View and manage your assigned tasks from the projects page.</p>
                 <?php endif; ?>
             </div>
-            
             <!-- Recent Activity (Admin Only) -->
             <?php if ($isAdmin): ?>
                 <div class="card">

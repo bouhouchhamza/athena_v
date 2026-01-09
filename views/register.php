@@ -3,57 +3,40 @@ session_start();
 require_once __DIR__ . '/../utils/Auth.php';
 require_once __DIR__ . '/../utils/Helpers.php';
 require_once __DIR__ . '/../repositories/UserRepository.php';
-
 $auth = new Auth();
 $errors = [];
-
-// If already logged in, redirect to dashboard
 if ($auth->isLoggedIn()) {
     Helpers::redirect('admin_dashboard.php');
 }
-
-// Handle registration form submission
 if (Helpers::isPost()) {
     $username = Helpers::sanitize(Helpers::getPost('username'));
     $email = Helpers::sanitizeEmail(Helpers::getPost('email'));
     $password = Helpers::getPost('password');
     $confirmPassword = Helpers::getPost('confirm_password');
     $role = Helpers::getPost('role');
-    
-    // Validation
     $errors = Helpers::validateRequired($_POST, ['username', 'email', 'password', 'confirm_password', 'role']);
-    
     if (empty($errors)) {
         if (!Helpers::validateEmail($email)) {
             $errors['email'] = 'Invalid email format';
         }
-        
         if (strlen($password) < 6) {
             $errors['password'] = 'Password must be at least 6 characters';
         }
-        
         if ($password !== $confirmPassword) {
             $errors['confirm_password'] = 'Passwords do not match';
         }
-        
         if (empty($errors)) {
             try {
                 $userRepository = new UserRepository();
-                
-                // Check if username or email already exists
                 if ($userRepository->findByUsername($username)) {
                     $errors['username'] = 'Username already exists';
                 }
-                
                 if ($userRepository->findByEmail($email)) {
                     $errors['email'] = 'Email already exists';
                 }
-                
                 if (empty($errors)) {
-                    // Create new user
                     $hashedPassword = Auth::hashPassword($password);
                     $user = new User($username, $email, $hashedPassword, $role);
-                    
                     if ($userRepository->save($user)) {
                         Helpers::flash('success', 'Registration successful! Please login.');
                         Helpers::redirect('login.php');
@@ -68,7 +51,6 @@ if (Helpers::isPost()) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,11 +81,9 @@ if (Helpers::isPost()) {
 <body>
     <div class="container">
         <h2>Register</h2>
-        
         <?php if (isset($errors['general'])): ?>
             <div class="error-general"><?php echo $errors['general']; ?></div>
         <?php endif; ?>
-        
         <form method="POST">
             <div class="form-group">
                 <label for="username">Username:</label>
@@ -112,7 +92,6 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['username']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required value="<?php echo Helpers::getPost('email'); ?>">
@@ -120,7 +99,6 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['email']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
@@ -128,7 +106,6 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['password']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div class="form-group">
                 <label for="confirm_password">Confirm Password:</label>
                 <input type="password" id="confirm_password" name="confirm_password" required>
@@ -136,7 +113,6 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['confirm_password']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <div class="form-group">
                 <label for="role">Role:</label>
                 <select id="role" name="role" required>
@@ -149,10 +125,8 @@ if (Helpers::isPost()) {
                     <div class="error"><?php echo $errors['role']; ?></div>
                 <?php endif; ?>
             </div>
-            
             <button type="submit">Register</button>
         </form>
-        
         <div class="link">
             <p>Already have an account? <a href="login.php">Login here</a></p>
         </div>

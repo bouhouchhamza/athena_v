@@ -6,42 +6,34 @@ require_once __DIR__ . '/../repositories/TacheRepository.php';
 require_once __DIR__ . '/../repositories/SprintRepository.php';
 require_once __DIR__ . '/../repositories/UserRepository.php';
 require_once __DIR__ . '/../services/TacheService.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
 $sprintId = Helpers::getGet('sprint_id');
 if (!$sprintId) {
     Helpers::flash('error', 'Sprint ID is required');
     Helpers::redirect('projets.php');
 }
-
 $tacheRepository = new TacheRepository();
 $sprintRepository = new SprintRepository();
 $userRepository = new UserRepository();
 $tacheService = new TacheService();
-
 $taches = [];
 $sprint = null;
 $users = [];
 $error = '';
-
 try {
     $sprint = $sprintRepository->findById($sprintId);
     if (!$sprint) {
         Helpers::flash('error', 'Sprint not found');
         Helpers::redirect('projets.php');
     }
-    
     $taches = $tacheRepository->findBySprintId($sprintId);
     $users = $userRepository->findAll();
 } catch (Exception $e) {
     $error = 'Failed to load tasks: ' . $e->getMessage();
 }
-
 $user = $auth->getCurrentUser();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,21 +94,17 @@ $user = $auth->getCurrentUser();
                 <a href="logout.php">Logout</a>
             </div>
         </div>
-        
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        
         <?php $success = Helpers::getFlash('success'); ?>
         <?php if ($success): ?>
             <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
-        
         <div style="margin-bottom: 20px;">
             <a href="create_tache.php?sprint_id=<?php echo $sprintId; ?>" class="btn btn-success">+ Create New Task</a>
             <a href="sprints.php?projet_id=<?php echo $sprint->getProjetId(); ?>" class="btn btn-secondary">← Back to Sprints</a>
         </div>
-        
         <?php if (empty($taches)): ?>
             <div class="empty">
                 <p>No tasks found for this sprint.</p>
@@ -176,11 +164,9 @@ $user = $auth->getCurrentUser();
                                         <a href="create_tache.php?action=complete&id=<?php echo $tache->getId(); ?>&sprint_id=<?php echo $sprintId; ?>" class="btn btn-success btn-sm">Complete</a>
                                     <?php endif; ?>
                                 <?php endif; ?>
-                                
                                 <?php if ($user->canManageEverything()): ?>
                                     <a href="create_tache.php?action=assign&id=<?php echo $tache->getId(); ?>&sprint_id=<?php echo $sprintId; ?>" class="btn btn-warning btn-sm">Assign</a>
                                 <?php endif; ?>
-                                
                                 <a href="reclamations.php?task_id=<?php echo $tache->getId(); ?>" class="btn btn-danger btn-sm">Report Issue</a>
                             </td>
                         </tr>

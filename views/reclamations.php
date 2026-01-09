@@ -6,24 +6,18 @@ require_once __DIR__ . '/../repositories/ReclamationRepository.php';
 require_once __DIR__ . '/../repositories/TacheRepository.php';
 require_once __DIR__ . '/../repositories/UserRepository.php';
 require_once __DIR__ . '/../services/ReclamationService.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
 $reclamationService = new ReclamationService();
 $reclamationRepository = new ReclamationRepository();
 $tacheRepository = new TacheRepository();
 $userRepository = new UserRepository();
-
 $reclamations = [];
 $task = null;
 $error = '';
 $showCreateForm = false;
-
 $user = $auth->getCurrentUser();
 $isAdmin = $user->canManageEverything();
-
-// Handle task_id parameter for creating reclamation
 $taskId = Helpers::getGet('task_id');
 if ($taskId) {
     $task = $tacheRepository->findById($taskId);
@@ -31,12 +25,9 @@ if ($taskId) {
         $showCreateForm = true;
     }
 }
-
-// Handle form submission for creating reclamation
 if (Helpers::isPost() && Helpers::getPost('action') === 'create') {
     $description = Helpers::sanitize(Helpers::getPost('description'));
     $taskId = Helpers::getPost('task_id');
-    
     if (empty($description)) {
         $error = 'Description is required';
     } elseif (empty($taskId)) {
@@ -51,11 +42,8 @@ if (Helpers::isPost() && Helpers::getPost('action') === 'create') {
         }
     }
 }
-
-// Handle resolving reclamation
 if (Helpers::isPost() && Helpers::getPost('action') === 'resolve') {
     $reclamationId = Helpers::getPost('reclamation_id');
-    
     if ($reclamationId) {
         try {
             $reclamationService->resolveReclamation($user->getId(), $reclamationId);
@@ -65,9 +53,7 @@ if (Helpers::isPost() && Helpers::getPost('action') === 'resolve') {
         }
     }
 }
-
 try {
-    // Admins see all reclamations, members see only their own
     if ($isAdmin) {
         $reclamations = $reclamationService->getAllReclamations();
     } else {
@@ -76,16 +62,12 @@ try {
 } catch (Exception $e) {
     $error = 'Failed to load reclamations: ' . $e->getMessage();
 }
-
-// Get all tasks for the dropdown
 $allTasks = [];
 try {
     $allTasks = $tacheRepository->findAll();
 } catch (Exception $e) {
-    // If we can't get tasks, we'll show an empty dropdown
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,31 +127,25 @@ try {
                 <a href="logout.php">Logout</a>
             </div>
         </div>
-        
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        
         <?php $success = Helpers::getFlash('success'); ?>
         <?php if ($success): ?>
             <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
-        
         <!-- Create Reclamation Form -->
         <?php if ($showCreateForm || !$isAdmin): ?>
             <div class="form-container">
                 <h3><?php echo $task ? 'Report Issue for Task' : 'Create New Reclamation'; ?></h3>
-                
                 <?php if ($task): ?>
                     <div class="task-info">
                         <strong>Task:</strong> <?php echo htmlspecialchars($task->getTitre()); ?><br>
                         <strong>ID:</strong> <?php echo $task->getId(); ?>
                     </div>
                 <?php endif; ?>
-                
                 <form method="POST">
                     <input type="hidden" name="action" value="create">
-                    
                     <?php if (!$task): ?>
                         <div class="form-group">
                             <label for="task_id">Select Task:</label>
@@ -185,17 +161,14 @@ try {
                     <?php else: ?>
                         <input type="hidden" name="task_id" value="<?php echo $task->getId(); ?>">
                     <?php endif; ?>
-                    
                     <div class="form-group">
                         <label for="description">Issue Description:</label>
                         <textarea id="description" name="description" required placeholder="Describe the issue or problem with this task..."><?php echo Helpers::getPost('description'); ?></textarea>
                     </div>
-                    
                     <button type="submit">Submit Reclamation</button>
                 </form>
             </div>
         <?php endif; ?>
-        
         <!-- Reclamations List -->
         <?php if (empty($reclamations)): ?>
             <div class="empty">

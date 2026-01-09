@@ -2,20 +2,14 @@
 session_start();
 require_once __DIR__ . '/../utils/Auth.php';
 require_once __DIR__ . '/../utils/Helpers.php';
-
 $auth = new Auth();
 $error = '';
-
-// If already logged in, redirect to dashboard
 if ($auth->isLoggedIn()) {
     Helpers::redirect('admin_dashboard.php');
 }
-
-// Handle login form submission
 if (Helpers::isPost()) {
     $username = Helpers::sanitize(Helpers::getPost('username'));
     $password = Helpers::getPost('password');
-    
     if ($user = $auth->login($username, $password)) {
         Helpers::redirect('admin_dashboard.php');
     } else {
@@ -23,7 +17,6 @@ if (Helpers::isPost()) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,30 +47,24 @@ if (Helpers::isPost()) {
 <body>
     <div class="container">
         <h2>Login</h2>
-        
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        
         <?php $success = Helpers::getFlash('success'); ?>
         <?php if ($success): ?>
             <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
-        
         <form method="POST">
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>
             </div>
-            
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            
             <button type="submit">Login</button>
         </form>
-        
         <div class="link">
             <p>Don't have an account? <a href="register.php">Register here</a></p>
         </div>

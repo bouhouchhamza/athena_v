@@ -3,23 +3,18 @@ session_start();
 require_once __DIR__ . '/../utils/Auth.php';
 require_once __DIR__ . '/../utils/Helpers.php';
 require_once __DIR__ . '/../services/ProjetService.php';
-
 $auth = new Auth();
 $auth->requireLogin();
-
 $projetService = new ProjetService();
 $projets = [];
 $error = '';
-
 try {
     $projets = $projetService->getAllProjets();
 } catch (Exception $e) {
     $error = 'Failed to load projects: ' . $e->getMessage();
 }
-
 $user = $auth->getCurrentUser();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -67,20 +62,16 @@ $user = $auth->getCurrentUser();
                 <a href="logout.php">Logout</a>
             </div>
         </div>
-        
         <?php if ($error): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        
         <?php $success = Helpers::getFlash('success'); ?>
         <?php if ($success): ?>
             <div class="success"><?php echo $success; ?></div>
         <?php endif; ?>
-        
         <div style="margin-bottom: 20px;">
             <a href="create_projet.php" class="btn btn-success">+ Create New Project</a>
         </div>
-        
         <?php if (empty($projets)): ?>
             <div class="empty">
                 <p>No projects found.</p>
